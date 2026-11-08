@@ -1,0 +1,24 @@
+{
+	"schemaVersion": 1,
+	"id": "setupsnap",
+	"version": "${version}",
+	"name": "SetupSnap",
+	"description": "Saves keybinds, sensitivity, video settings and mod configs into one portable profile, so a new instance or PC can pick up your setup exactly where you left it.",
+	"authors": [
+		"SetupSnap"
+	],
+	"license": "MIT",
+	"icon": "assets/setupsnap/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.setupsnap.SetupSnapClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~${minecraft_version}",
+		"java": ">=${java_version}",
+		"fabric-api": "*"
+	}
+}

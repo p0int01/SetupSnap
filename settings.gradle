@@ -1,0 +1,19 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		mavenCentral()
+		gradlePluginPortal()
+	}
+}
+
+rootProject.name = 'setupsnap'
+
+// One module per supported Minecraft version. All of them compile the shared
+// sources in src/main, so a change applies to every target at once.
+include 'versions:mc-1.21.11'
+include 'versions:mc-26.1.2'
+include 'versions:mc-26.2'
+include 'versions:mc-26.3'

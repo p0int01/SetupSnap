@@ -1,0 +1,36 @@
+[mod]
+id = "setupsnap"
+version = "1.0.0"
+priority = 100
+
+[compatibility]
+horizon_revision = "2d22e6a7e3007c28045c6384f1b9ecd9fae819eb"
+
+# The whole profile implementation, injected as crate::game::setupsnap.
+[[module]]
+id = "runtime"
+file = "crates/horizon-client/src/game.rs"
+name = "setupsnap"
+source = "runtime.rs"
+
+# API 35: the command names Horizon's chat box colours and completes.
+[[injection]]
+id = "setupsnap-commands"
+kind = "HEAD"
+hook = "commands"
+hook_version = 1
+helper = "commands.rs"
+bindings = [{ name = "commands", ty = "&mut Vec<&'static str>", value = "commands" }]
+
+# API 35: a command typed in chat, without its slash, before the server sees it.
+[[injection]]
+id = "setupsnap-command"
+kind = "HEAD"
+hook = "command"
+hook_version = 1
+helper = "command.rs"
+bindings = [
+    { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+    { name = "command", ty = "&str", value = "command" },
+    { name = "ran", ty = "&mut bool", value = "ran" },
+]

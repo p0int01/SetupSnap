@@ -1,0 +1,16 @@
+[package]
+name = "setupsnap-horizon"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.95"
+license = "MIT"
+description = "SetupSnap's .snapsnap profiles for Horizon's native mod system"
+
+[lib]
+# The same source Horizon injects as crate::game::setupsnap, so tests here
+# exercise exactly the code the game compiles.
+path = "mixins/setupsnap/runtime.rs"
+
+# No dependencies on purpose: a Horizon native mod may only use crates already
+# in Horizon's Cargo.lock, and this one needs none.
+[dependencies]

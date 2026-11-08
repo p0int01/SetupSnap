@@ -1,0 +1,95 @@
+plugins {
+	// Obfuscated Minecraft (<= 1.21.11) needs remapping, 26.x ships unobfuscated.
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
+	id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+}
+
+subprojects {
+	// 'versions' itself is only a container; real modules declare their Minecraft version.
+	if (!project.hasProperty('obfuscated')) {
+		return
+	}
+
+	def obfuscated = project.obfuscated.toBoolean()
+
+	apply plugin: obfuscated ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+
+	group = project.mod_group
+	version = "${project.mod_version}+${project.minecraft_version}"
+
+	repositories {
+		mavenCentral()
+	}
+
+	// Shared sources for every version, plus one small per-generation adapter
+	// directory (src/mc121 or src/mc26) that holds the Fabric API differences.
+	sourceSets.main.java.setSrcDirs([rootProject.file('src/main/java')])
+	sourceSets.main.resources.setSrcDirs([rootProject.file('src/main/resources')])
+
+	def flavorDir = rootProject.file("src/${project.source_flavor}/java")
+	if (!flavorDir.isDirectory()) {
+		throw new GradleException("Missing adapter sources: ${flavorDir}")
+	}
+
+	sourceSets.main.java.srcDir(flavorDir)
+
+	// A module may add its own overlay under versions/<module>/src/main if needed.
+	def javaOverlay = project.file('src/main/java')
+	if (javaOverlay.isDirectory()) {
+		sourceSets.main.java.srcDir(javaOverlay)
+	}
+
+	def resourcesOverlay = project.file('src/main/resources')
+	if (resourcesOverlay.isDirectory()) {
+		sourceSets.main.resources.srcDir(resourcesOverlay)
+	}
+
+	dependencies {
+		minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+		if (obfuscated) {
+			mappings loom.officialMojangMappings()
+			modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+			modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+		} else {
+			// Unobfuscated versions are used as published, without remapping.
+			// The aggregate fabric-api artifact only bundles nested jars, so the
+			// modules this mod actually uses are listed explicitly.
+			implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+			project.fabric_api_modules.split(',').each { module ->
+				implementation "net.fabricmc.fabric-api:${module.trim()}"
+			}
+		}
+	}
+
+	// Captured here so the task closure never touches the project at execution
+	// time; that keeps Gradle's configuration cache happy.
+	def templateValues = [
+		version: "${project.mod_version}+${project.minecraft_version}" as String,
+		minecraft_version: project.minecraft_version as String,
+		java_version: project.java_version as String
+	]
+
+	processResources {
+		inputs.properties(templateValues)
+
+		filesMatching('fabric.mod.json') {
+			expand(templateValues)
+		}
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		it.options.release = project.java_version.toInteger()
+		it.options.encoding = 'UTF-8'
+	}
+
+	java {
+		sourceCompatibility = JavaVersion.toVersion(project.java_version)
+		targetCompatibility = JavaVersion.toVersion(project.java_version)
+	}
+
+	// Name every archive after the mod, not the version module directory.
+	base {
+		archivesName = 'setupsnap'
+	}
+}
